@@ -1,0 +1,1 @@
+# indicador_composto
