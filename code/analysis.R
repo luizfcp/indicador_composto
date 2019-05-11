@@ -94,6 +94,7 @@ data <-
   select(ano, municipio, assalto, estupro, homicidios, extorsao, lesao_corporal_consumado, sequestro_e_carcere_privado_consumado)
 
 
+
 # data %>% write.xlsx("base.xlsx")
 
 # ## a partir de 2015 apenas
