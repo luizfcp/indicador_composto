@@ -26,7 +26,7 @@ populacao <- read_excel("../data/2019-04-05 - Banco Outras Naturezas Armazm - At
 raw_data <- 
   # Crimes Violentos
   base_crimes_violentos %>% 
-  unite(municipio, c(cod_ibge, municipio), sep = " ") %>% 
+  unite(municipio, c(cod_ibge, municipio), sep = "_") %>% 
   select(municipio, natureza, registros, ano) %>% 
   nest(-ano) %>% 
   mutate(
@@ -42,7 +42,7 @@ raw_data <-
   full_join(
     # Outras naturezas
     base_outras_naturezas %>% 
-      unite(municipio, c(cod_ibge, municipio), sep = " ") %>% 
+      unite(municipio, c(cod_ibge, municipio), sep = "_") %>% 
       select(municipio, natureza, registros, ano) %>%
       nest(-ano) %>% 
       mutate(
@@ -59,7 +59,7 @@ raw_data <-
   full_join(
     # Vitimas de Homicidios
     base_vitimas_homicidios %>% 
-      unite(municipio, c(cod_ibge, municipio), sep = " ") %>% 
+      unite(municipio, c(cod_ibge, municipio), sep = "_") %>% 
       select(municipio, natureza, vitimas, ano) %>% 
       nest(-ano) %>% 
       mutate(
@@ -91,7 +91,8 @@ data <-
     # Agregando roubo e furto
     assalto = roubo_consumado+furto_consumado
   ) %>% 
-  select(ano, municipio, assalto, estupro, homicidios, extorsao, lesao_corporal_consumado, sequestro_e_carcere_privado_consumado)
+  select(ano, municipio, assalto, estupro, homicidios, extorsao, lesao_corporal_consumado, sequestro_e_carcere_privado_consumado) %>% 
+  separate(municipio, c("cod_ibge", "municipio"), sep = "_")
 
 
 
