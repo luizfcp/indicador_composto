@@ -8,7 +8,6 @@ library(magrittr)
 library(readxl)
 library(janitor)
 
-
 # Import ------------------------------------------------------------------
 
 base_crimes_violentos   <- readRDS("../data/rds/Banco Crimes Violentos Armazm 2019 - Por municipio e Por RISP.rds")     %>% clean_names()
@@ -19,7 +18,6 @@ base_vitimas_homicidios <- readRDS("../data/rds/Banco Vtimas de Homicdio Consuma
 
 populacao <- read_excel("../data/2019-04-05 - Banco Outras Naturezas Armazm - Atualizado Maro 2019 - Por Municpio e Por RISP.xlsx",
                         sheet = 5)
-
 
 # Manipulacao -------------------------------------------------------------
 
@@ -94,6 +92,14 @@ data <-
   select(ano, municipio, assalto, estupro, homicidios, extorsao, lesao_corporal_consumado, sequestro_e_carcere_privado_consumado) %>% 
   separate(municipio, c("cod_ibge", "municipio"), sep = "_")
 
+
+# Correlacao --------------------------------------------------------------
+
+a <- data %>% filter(ano==2012) %>% .[, 4:9]
+
+a %>% cor
+
+corrplot(a, method="color", tl.cex = 1, type="full", addCoef.col = "white")
 
 
 # data %>% write.xlsx("base.xlsx")
