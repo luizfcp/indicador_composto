@@ -8,6 +8,8 @@ library(magrittr)
 library(readxl)
 library(janitor)
 
+options(scipen = 99999999)
+
 # Import ------------------------------------------------------------------
 
 base_crimes_violentos   <- readRDS("../data/rds/Banco Crimes Violentos Armazm 2019 - Por municipio e Por RISP.rds")     %>% clean_names()
@@ -92,14 +94,56 @@ data <-
   select(ano, municipio, assalto, estupro, homicidios, extorsao, lesao_corporal_consumado, sequestro_e_carcere_privado_consumado) %>% 
   separate(municipio, c("cod_ibge", "municipio"), sep = "_")
 
+# Proporcao dos dados (crime / população)
+pop_mg_municipios <- 
+  populacao %>%
+  clean_names() %>%
+  select(cod, municipio, x2012_7:x2018_13) %>% 
+  filter(municipio!="(Tudo)") %>% 
+  arrange(cod) %>% 
+  select(-cod) %>% 
+  `colnames<-`(c("municipio", paste0("20", 12:18))) %>% 
+  gather(ano, populacao, -municipio) %>% 
+  mutate(ano = as.numeric(ano))
+
+### rever isso
+data_prop <- 
+  left_join(data, pop_mg_municipios, by = c("municipio", "ano")) %>% 
+  nest(-ano) %>% 
+  mutate(data_prop = map(data,
+                         ~ .x %<>% mutate(
+                           prop_assalto = .x$assalto/.x$populacao,
+                           prop_estupro = .x$estupro/.x$populacao,
+                           prop_homicidios = .x$homicidios/.x$populacao,
+                           prop_extorsao = .x$extorsao/.x$populacao,
+                           prop_lesao_corp = .x$lesao_corporal_consumado/.x$populacao,
+                           prop_seq_carc_priv = .x$sequestro_e_carcere_privado_consumado/.x$populacao
+                         ))) %>% 
+  select(ano, data_prop) %>% 
+  unnest()
+  
+  
+
+
+
+a %>% 
+  map(~ .x/pop_mg_municipios)
+
 
 # Correlacao --------------------------------------------------------------
 
+library(GGally)
+ggpairs(a, lower = list(continuous = "smooth"))
+
+
 a <- data %>% filter(ano==2012) %>% .[, 4:9]
 
-a %>% cor
+a %>% 
+  `colnames<-`(c("assalto", "estupro", "homicídios", "extorsão", "lesão corporal", "sequestro e cárcere")) %>% 
+  cor %>% 
+  corrplot(method="color")
 
-corrplot(a, method="color", tl.cex = 1, type="full", addCoef.col = "white")
+
 
 
 # data %>% write.xlsx("base.xlsx")
