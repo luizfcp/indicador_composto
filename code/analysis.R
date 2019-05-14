@@ -101,14 +101,14 @@ pop_mg_municipios <-
   select(cod, municipio, x2012_7:x2018_13) %>% 
   filter(municipio!="(Tudo)") %>% 
   arrange(cod) %>% 
-  select(-cod) %>% 
-  `colnames<-`(c("municipio", paste0("20", 12:18))) %>% 
-  gather(ano, populacao, -municipio) %>% 
+  select(-municipio) %>%
+  `colnames<-`(c("cod_ibge", paste0("20", 12:18))) %>% 
+  gather(ano, populacao, -cod_ibge) %>% 
   mutate(ano = as.numeric(ano))
 
-### rever isso
+
 data_prop <- 
-  left_join(data, pop_mg_municipios, by = c("municipio", "ano")) %>% 
+  full_join(data, pop_mg_municipios, by = c("ano", "cod_ibge")) %>% 
   nest(-ano) %>% 
   mutate(data_prop = map(data,
                          ~ .x %<>% mutate(
@@ -119,28 +119,24 @@ data_prop <-
                            prop_lesao_corp = .x$lesao_corporal_consumado/.x$populacao,
                            prop_seq_carc_priv = .x$sequestro_e_carcere_privado_consumado/.x$populacao
                          ))) %>% 
-  select(ano, data_prop) %>% 
-  unnest()
-  
-  
-
-
-
-a %>% 
-  map(~ .x/pop_mg_municipios)
+  select(ano, data_prop)
 
 
 # Correlacao --------------------------------------------------------------
 
 library(GGally)
-ggpairs(a, lower = list(continuous = "smooth"))
+ggpairs(data_prop$data_prop[[1]][, 10:15], lower = list(continuous = "smooth"), upper = list(method = "spearman"))
 
 
 a <- data %>% filter(ano==2012) %>% .[, 4:9]
 
 a %>% 
-  `colnames<-`(c("assalto", "estupro", "homicídios", "extorsão", "lesão corporal", "sequestro e cárcere")) %>% 
-  cor %>% 
+  `colnames<-`(c("assalto", "estupro", "homicídios", "extorsão", "lesão corporal", "sequestro e cárcere"))
+  
+
+library(corrplot)
+  data_prop$data_prop[[1]][, 10:15] %>% 
+  cor(method = "spearman") %>% 
   corrplot(method="color")
 
 
