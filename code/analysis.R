@@ -7,6 +7,7 @@ library(purrr)
 library(magrittr)
 library(readxl)
 library(janitor)
+library(GGally)
 
 options(scipen = 99999999)
 
@@ -15,13 +16,22 @@ options(scipen = 99999999)
 base_crimes_violentos   <- readRDS("../data/rds/Banco Crimes Violentos Armazm 2019 - Por municipio e Por RISP.rds")     %>% clean_names()
 base_outras_naturezas   <- readRDS("../data/rds/Banco Outras Naturezas 2019 - Por Municpio e Por RISP.rds")             %>% clean_names()
 base_vitimas_homicidios <- readRDS("../data/rds/Banco Vtimas de Homicdio Consumado 2019 - Por Municpio e Por RISP.rds") %>% clean_names()
-# base_alvos_de_roubo     <- readRDS("../data/rds/Banco Alvos de Roubo 2019 - Por Municpio e Por RISP.rds")
-# base_veiculos_roubados  <- readRDS("../data/rds/Banco Veculos Roubados 2019 - Por Municpio e Por RISP.rds")
 
 populacao <- read_excel("../data/2019-04-05 - Banco Outras Naturezas Armazm - Atualizado Maro 2019 - Por Municpio e Por RISP.xlsx",
                         sheet = 5)
 
-# Manipulacao -------------------------------------------------------------
+# Wrangling ---------------------------------------------------------------
+
+pop_mg_municipios <- 
+  populacao %>%
+  clean_names() %>%
+  select(cod, municipio, x2013_8:x2016_11) %>% 
+  filter(municipio!="(Tudo)") %>% 
+  arrange(cod) %>% 
+  select(-municipio) %>%
+  `colnames<-`(c("cod_ibge", paste0("20", 13:16))) %>% 
+  gather(ano, populacao, -cod_ibge) %>% 
+  mutate(ano = as.numeric(ano))
 
 raw_data <- 
   # Crimes Violentos
@@ -74,7 +84,8 @@ raw_data <-
       unnest()
   ) %>% 
   clean_names() %>% 
-  filter(ano!=2019)
+  filter(ano %in% 2013:2016)
+
 
 data <- 
   raw_data %>% 
@@ -91,22 +102,11 @@ data <-
     # Agregando roubo e furto
     assalto = roubo_consumado+furto_consumado
   ) %>% 
-  select(ano, municipio, assalto, estupro, homicidios, extorsao, lesao_corporal_consumado, sequestro_e_carcere_privado_consumado) %>% 
+  select(ano, municipio, assalto, estupro, homicidios, extorsao, lesao_corporal_consumado) %>% 
   separate(municipio, c("cod_ibge", "municipio"), sep = "_")
 
-# Proporcao dos dados (crime / população)
-pop_mg_municipios <- 
-  populacao %>%
-  clean_names() %>%
-  select(cod, municipio, x2012_7:x2018_13) %>% 
-  filter(municipio!="(Tudo)") %>% 
-  arrange(cod) %>% 
-  select(-municipio) %>%
-  `colnames<-`(c("cod_ibge", paste0("20", 12:18))) %>% 
-  gather(ano, populacao, -cod_ibge) %>% 
-  mutate(ano = as.numeric(ano))
 
-
+# Proporcao dos dados (crime/populacao)
 data_prop <- 
   full_join(data, pop_mg_municipios, by = c("ano", "cod_ibge")) %>% 
   nest(-ano) %>% 
@@ -116,65 +116,39 @@ data_prop <-
                            prop_estupro = .x$estupro/.x$populacao,
                            prop_homicidios = .x$homicidios/.x$populacao,
                            prop_extorsao = .x$extorsao/.x$populacao,
-                           prop_lesao_corp = .x$lesao_corporal_consumado/.x$populacao,
-                           prop_seq_carc_priv = .x$sequestro_e_carcere_privado_consumado/.x$populacao
+                           prop_lesao_corp = .x$lesao_corporal_consumado/.x$populacao
                          ))) %>% 
   select(ano, data_prop)
 
 
 # Correlacao --------------------------------------------------------------
 
-library(GGally)
-ggpairs(data_prop$data_prop[[1]][, 10:15], lower = list(continuous = "smooth"), upper = list(method = "spearman"))
+## Foi utilizado a correlacao de spearman, pois as variaveis sao assimetricas
+
+data_prop %<>% 
+  mutate(
+    cor_graf = map2(
+      data_prop, ano,
+      ~ .x[, 9:13] %>% 
+        `colnames<-`(c("assalto", "estupro", "homicídios", "extorsão", "lesão corporal")) %>% 
+        ggpairs(lower = list(continuous = "smooth"), 
+                upper = list(method = "spearman"),
+                title = .y)
+    )
+  )
 
 
-a <- data %>% filter(ano==2012) %>% .[, 4:9]
 
-a %>% 
-  `colnames<-`(c("assalto", "estupro", "homicídios", "extorsão", "lesão corporal", "sequestro e cárcere"))
-  
-
-library(corrplot)
-  data_prop$data_prop[[1]][, 10:15] %>% 
-  cor(method = "spearman") %>% 
-  corrplot(method="color")
+data_prop$cor_graf[[1]]
 
 
+# library(corrplot)
+#   data_prop$data_prop[[1]][, 10:15] %>% 
+#   cor(method = "spearman") %>% 
+#   corrplot(method="color")
 
 
 # data %>% write.xlsx("base.xlsx")
-
-# ## a partir de 2015 apenas
-# base_alvos_de_roubo %>% 
-#   select(municipio, natureza, registros, ano) %>% #cod_ibge, 
-#   nest(-ano) %>% 
-#   mutate(
-#     data = map(
-#       data,
-#       ~ .x %>% 
-#         group_by(municipio, natureza) %>% 
-#         summarise(registro_anual_alvos_de_roubo = sum(registros)) %>%
-#         spread(natureza, registro_anual_alvos_de_roubo)
-#     )
-#   ) %>% 
-#   unnest()
-#   
-# base_veiculos_roubados %>% 
-#   select(municipio, natureza, registros, ano) %>% #cod_ibge, 
-#   nest(-ano) %>% 
-#   mutate(
-#     data = map(
-#       data,
-#       ~ .x %>% 
-#         group_by(municipio, natureza) %>% 
-#         summarise(registro_anual_veiculos_roubados = sum(registros)) %>%
-#         spread(natureza, registro_anual_veiculos_roubados)
-#     )
-#   ) %>% 
-#   unnest()
-
-
-
 
 
 ## Tentar correlacionar crime com outra coisa, tipo analfabetismo
