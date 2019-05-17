@@ -137,9 +137,14 @@ data_prop %<>%
     )
   )
 
+# Salvando
+walk2(data_prop$cor_graf, data_prop$ano,
+      ~ ggsave(
+        paste0("../img/correlacao/", .y, ".png"),
+        plot=.x, dpi="retina", width=16.00, height=8.09, scale=1
+      )
+)
 
-
-data_prop$cor_graf[[1]]
 
 
 # library(corrplot)
