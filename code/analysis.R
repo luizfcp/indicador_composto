@@ -178,8 +178,11 @@ data_prop %<>%
   mutate(
     cor_graf = map2(
       data_prop, ano,
-      ~ .x[, 9:13] %>% 
-        `colnames<-`(c("assalto", "estupro", "homicídios", "extorsão", "lesão corporal")) %>% 
+      ~ .x %>% 
+        select(prop_assalto, prop_estupro, prop_homicidios, prop_extorsao, prop_lesao_corp,
+               prop_internacoes, prop_obitos, prop_pib_per_cap, prop_pib_per_cor) %>% 
+        `colnames<-`(c("assalto", "estupro", "homicídios", "extorsão", "lesão corporal",
+                       "internações", "óbitos", "PIB per capita", "PIB per corrente")) %>% 
         ggpairs(lower = list(continuous = "smooth"), 
                 upper = list(method = "spearman"),
                 title = .y)
