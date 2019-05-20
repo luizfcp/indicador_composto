@@ -181,8 +181,8 @@ data_prop %<>%
       ~ .x %>% 
         select(prop_assalto, prop_estupro, prop_homicidios, prop_extorsao, prop_lesao_corp,
                prop_internacoes, prop_obitos, prop_pib_per_cap, prop_pib_per_cor) %>% 
-        `colnames<-`(c("assalto", "estupro", "homicídios", "extorsão", "lesão corporal",
-                       "internações", "óbitos", "PIB per capita", "PIB per corrente")) %>% 
+        `colnames<-`(c("Assalto", "Estupro", "Homicídios", "Extorsão", "Lesão Corporal",
+                       "Internações", "Óbitos", "PIB per Capita", "PIB per Corrente")) %>% 
         ggpairs(lower = list(continuous = "smooth"), 
                 upper = list(method = "spearman"),
                 title = .y)
