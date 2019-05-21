@@ -25,6 +25,8 @@ base_pib_per_corrente   <- readRDS("../data/rds/pib_per_corrente.rds") %>% clean
 
 populacao <- read_excel("../data/2019-04-05 - Banco Outras Naturezas Armazm - Atualizado Maro 2019 - Por Municpio e Por RISP.xlsx", sheet = 5)
 
+area_mun <- read_excel("/cloud/project/data/area_mun_mg_2016.xls") %>% clean_names()
+
 # Wrangling ---------------------------------------------------------------
 
 # Base de dados populacao por municipio
@@ -38,6 +40,25 @@ pop_mg_municipios <-
   `colnames<-`(c("cod_ibge", paste0("20", 13:16))) %>% 
   gather(ano, populacao, -cod_ibge) %>% 
   mutate(ano = as.numeric(ano))
+
+
+
+area_mun %<>% 
+  select(cd_gcmun, ar_mun_2016) %>% 
+  mutate(cd_gcmun = str_sub(cd_gcmun, end = 6)) %>% 
+  `colnames<-`(c("cod_ibge", "area_mun_2016"))
+
+pop_mg_municipios %<>% 
+  nest(-ano) %>% 
+  mutate(pop_area_mun = map(
+    data,
+    ~ .x %>% full_join(area_mun)
+  )) %>% 
+  select(ano, pop_area_mun) %>% 
+  unnest() %>% 
+  mutate(dens_demografica = populacao/area_mun_2016)
+
+
 
 # Base de dados primaria
 bases_prim <- 
@@ -157,15 +178,24 @@ data_prop <-
   nest(-ano) %>% 
   mutate(data_prop = map(data,
                          ~ .x %>% mutate(
-                           prop_assalto     = .x$assalto/.x$populacao,
-                           prop_estupro     = .x$estupro/.x$populacao,
-                           prop_homicidios  = .x$homicidios/.x$populacao,
-                           prop_extorsao    = .x$extorsao/.x$populacao,
-                           prop_lesao_corp  = .x$lesao_corporal_consumado/.x$populacao,
-                           prop_internacoes = .x$internacoes/.x$populacao,
-                           prop_obitos      = .x$obitos/.x$populacao,
-                           prop_pib_per_cap = .x$pib_per_capita/.x$populacao,
-                           prop_pib_per_cor = .x$pib_per_corrente/.x$populacao
+                           prop_assalto     = .x$assalto/.x$dens_demografica,
+                           prop_estupro     = .x$estupro/.x$dens_demografica,
+                           prop_homicidios  = .x$homicidios/.x$dens_demografica,
+                           prop_extorsao    = .x$extorsao/.x$dens_demografica,
+                           prop_lesao_corp  = .x$lesao_corporal_consumado/.x$dens_demografica,
+                           prop_internacoes = .x$internacoes/.x$dens_demografica,
+                           prop_obitos      = .x$obitos/.x$dens_demografica,
+                           prop_pib_per_cap = .x$pib_per_capita/.x$dens_demografica,
+                           prop_pib_per_cor = .x$pib_per_corrente/.x$dens_demografica
+                           # prop_assalto     = .x$assalto/.x$populacao,
+                           # prop_estupro     = .x$estupro/.x$populacao,
+                           # prop_homicidios  = .x$homicidios/.x$populacao,
+                           # prop_extorsao    = .x$extorsao/.x$populacao,
+                           # prop_lesao_corp  = .x$lesao_corporal_consumado/.x$populacao,
+                           # prop_internacoes = .x$internacoes/.x$populacao,
+                           # prop_obitos      = .x$obitos/.x$populacao,
+                           # prop_pib_per_cap = .x$pib_per_capita/.x$populacao,
+                           # prop_pib_per_cor = .x$pib_per_corrente/.x$populacao
                          ))) %>% 
   select(ano, data_prop)
 
@@ -196,6 +226,39 @@ walk2(data_prop$cor_graf, data_prop$ano,
         plot=.x, dpi="retina", width=16.00, height=8.09, scale=1
       )
 )
+
+#   -----------------------------------------------------------------------
+
+padroniza <- function(x) {
+  ( max(x)-x )/( max(x)-min(x) )
+}
+
+data_prop %$% data_prop %>% .[[1]] %$% prop_assalto %>% summary() 
+
+
+base <- data_prop %$% data_prop %>% .[[1]] %>% 
+  transmute(
+    ind_assalto_padr = padroniza(prop_assalto),
+    ind_estupro_padr = padroniza(prop_estupro),
+    ind_homicidios_padr = padroniza(prop_homicidios),
+    ind_extorsao_padr = padroniza(prop_extorsao),
+    ind_lesao_corp_padr = padroniza(prop_lesao_corp),
+    ind_internacoes_padr = padroniza(prop_internacoes),
+    ind_obitos_padr = padroniza(prop_obitos),
+    ind_pib_per_cap_padr = padroniza(prop_pib_per_cap),
+    ind_pib_per_cor_padr = padroniza(prop_pib_per_cor)
+  )
+  
+base %>% ggpairs(lower = list(continuous = "smooth"), upper = list(method = "spearman"))
+
+base %>% 
+  select(-ind_extorsao_padr, -ind_obitos_padr, -ind_pib_per_cap_padr) %>% 
+  transmute(ind_composto = (ind_assalto_padr+ind_estupro_padr+ind_homicidios_padr+
+                              ind_lesao_corp_padr+ind_internacoes_padr+(1-ind_pib_per_cor_padr))/6)
+### O 0 é a pior situação de segurança, o 1 a melhor, após a padraonizao (fun padronzia)
+
+
+#- Falta organizar e fazer para todos os anos e juntar a coluna cod dos municipios do ibge
 
 
 
