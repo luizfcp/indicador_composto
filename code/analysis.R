@@ -223,3 +223,6 @@ walk2(indicadores$cor_graf, indicadores$ano,
 )
 
 #   -----------------------------------------------------------------------
+
+# indice_seguranca_mineiro %>% unnest() %>% 
+#   xlsx::write.xlsx("../ism.xls")
