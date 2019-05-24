@@ -17,7 +17,7 @@ options(scipen = 99999999)
 base_crimes_violentos   <- readRDS("../data/rds/Banco Crimes Violentos Armazm 2019 - Por municipio e Por RISP.rds")     %>% clean_names()
 base_outras_naturezas   <- readRDS("../data/rds/Banco Outras Naturezas 2019 - Por Municpio e Por RISP.rds")             %>% clean_names()
 base_vitimas_homicidios <- readRDS("../data/rds/Banco Vtimas de Homicdio Consumado 2019 - Por Municpio e Por RISP.rds") %>% clean_names()
-base_internacoes        <- readRDS("../data/rds/internacoes.rds")      %>% clean_names()
+base_internacoes        <- readRDS("../data/rds/internacoes.rds")        %>% clean_names()
 base_pib_preco_corrente <- readRDS("../data/rds/pib_preco_corrente.rds") %>% clean_names()
 
 area_mun  <- read_excel("/cloud/project/data/area_mun_mg_2016.xls") %>% clean_names()
