@@ -18,7 +18,7 @@ base_crimes_violentos   <- readRDS("../data/rds/Banco Crimes Violentos Armazm 20
 base_outras_naturezas   <- readRDS("../data/rds/Banco Outras Naturezas 2019 - Por Municpio e Por RISP.rds")             %>% clean_names()
 base_vitimas_homicidios <- readRDS("../data/rds/Banco Vtimas de Homicdio Consumado 2019 - Por Municpio e Por RISP.rds") %>% clean_names()
 base_internacoes        <- readRDS("../data/rds/internacoes.rds")      %>% clean_names()
-base_pib_preco_corrente <- readRDS("../data/rds/pib_per_corrente.rds") %>% clean_names()
+base_pib_preco_corrente <- readRDS("../data/rds/pib_preco_corrente.rds") %>% clean_names()
 
 area_mun  <- read_excel("/cloud/project/data/area_mun_mg_2016.xls") %>% clean_names()
 populacao <- read_excel("../data/2019-04-05 - Banco Outras Naturezas Armazm - Atualizado Maro 2019 - Por Municpio e Por RISP.xlsx", sheet = 5)
