@@ -229,7 +229,10 @@ plot_grid(
   ggmatrix_gtable(indicadores$cor_graf[[3]]),
   ggmatrix_gtable(indicadores$cor_graf[[4]]),
   nrow = 2
-)
+) %>% 
+  ggsave(
+    "../img/correlacao/todos_os_anos.png",
+    plot=., dpi="retina", width=20.00, height=17.00, scale=1)
 
 #   -----------------------------------------------------------------------
 
