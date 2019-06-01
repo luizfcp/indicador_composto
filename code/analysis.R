@@ -9,6 +9,7 @@ library(readxl)
 library(janitor)
 library(GGally)
 library(stringr)
+library(cowplot)
 
 options(scipen = 99999999)
 
@@ -220,6 +221,14 @@ walk2(indicadores$cor_graf, indicadores$ano,
         paste0("../img/correlacao/", .y, ".png"),
         plot=.x, dpi="retina", width=13.00, height=10.00, scale=1
       )
+)
+
+plot_grid(
+  ggmatrix_gtable(indicadores$cor_graf[[1]]),
+  ggmatrix_gtable(indicadores$cor_graf[[2]]),
+  ggmatrix_gtable(indicadores$cor_graf[[3]]),
+  ggmatrix_gtable(indicadores$cor_graf[[4]]),
+  nrow = 2
 )
 
 #   -----------------------------------------------------------------------
