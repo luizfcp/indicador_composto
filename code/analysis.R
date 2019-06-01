@@ -218,7 +218,7 @@ indicadores %<>%
 walk2(indicadores$cor_graf, indicadores$ano,
       ~ ggsave(
         paste0("../img/correlacao/", .y, ".png"),
-        plot=.x, dpi="retina", width=16.00, height=11.00, scale=1
+        plot=.x, dpi="retina", width=13.00, height=10.00, scale=1
       )
 )
 
