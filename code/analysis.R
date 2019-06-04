@@ -10,6 +10,8 @@ library(janitor)
 library(GGally)
 library(stringr)
 library(cowplot)
+library(flextable)
+library(pacotin)
 
 options(scipen = 99999999)
 
@@ -233,6 +235,71 @@ plot_grid(
   ggsave(
     "../img/correlacao/todos_os_anos.png",
     plot=., dpi="retina", width=20.00, height=17.00, scale=1)
+
+
+# Tabela ------------------------------------------------------------------
+
+data_tabela <- 
+  indice_seguranca_mineiro %>%
+  mutate(ism = map(ism,
+                   ~ .x %>% 
+                     mutate(condicao_indice = if_else(ISM<0.2, "MUITO RUIM",
+                                                      if_else(ISM<0.4, "RUIM",
+                                                              if_else(ISM<0.6, "REGULAR",
+                                                                      if_else(ISM<0.8, "BOM", "MUITO BOM"))))) %>% 
+                     inner_join(data$razoes[[1]] %>% select(cod_ibge, municipio)) %>% 
+                     select(municipio, ISM, condicao_indice, -cod_ibge) %>% 
+                     mutate(municipio = str_to_title(municipio),
+                            condicao_indice = str_to_title(condicao_indice))),
+         # 5 maiores negativos
+         negativos = map2(ism, ano,
+                         ~ .x %>% 
+                           arrange(ISM) %>% 
+                           head(5) %>% 
+                           `colnames<-`(c("Município", "ISM", "Condição")) %>% 
+                           flextable() %>% 
+                           theme_zebra(odd_header = "#002b96", even_body = "white", odd_body = "#d6e1ff") %>% 
+                           width(width = c(2.3, 1, 1)) %>% 
+                           bold(part = "header") %>% 
+                           color(part = "header", color = "white") %>%
+                           align(part = "all", align = "center") %>% 
+                           align(j = 1, align = "left") %>% 
+                           fontsize(part = "all", size = 12) %>% 
+                           add_footer(Condição = .y %>% as.integer()) %>% 
+                           align(part = "footer", align = "right")),
+         # 5 maiores positivos
+         positivos = map2(ism, ano,
+                         ~ .x %>% 
+                           arrange(-ISM) %>% 
+                           head(5) %>% 
+                           `colnames<-`(c("Município", "ISM", "Condição")) %>% 
+                           flextable() %>% 
+                           theme_zebra(odd_header = "#002b96", even_body = "white", odd_body = "#d6e1ff") %>% 
+                           width(width = c(2.3, 1, 1)) %>% 
+                           bold(part = "header") %>% 
+                           color(part = "header", color = "white") %>%
+                           align(part = "all", align = "center") %>% 
+                           align(j = 1, align = "left") %>% 
+                           fontsize(part = "all", size = 12) %>% 
+                           add_footer(Condição = .y %>% as.integer()) %>% 
+                           align(part = "footer", align = "right"))
+  )
+
+# Salvando
+{
+  ## 5 maiores negativos
+  walk2(data_tabela$ano, data_tabela$negativos,
+        ~ insert_screenshot(
+          .y, paste0("../img/tabela/", paste0(.x, "_neg"), ".png")
+        )
+  )
+  ## 5 maiores positivos
+  walk2(data_tabela$ano, data_tabela$positivos,
+        ~ insert_screenshot(
+          .y, paste0("../img/tabela/", paste0(.x, "_pos"), ".png")
+        )
+  )
+}
 
 #   -----------------------------------------------------------------------
 
