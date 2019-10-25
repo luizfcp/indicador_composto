@@ -6,4 +6,4 @@ Construção de um Indicador Composto para a disciplina de Estatística Aplicada
 
 ## Pôster
 
-Trabalho será apresentado na 11ª Semana da Estatística da UFF na categoria Resumo Simples - Sessão Pôster.
+Trabalho apresentado na 11ª Semana da Estatística da UFF na categoria Resumo Simples - Sessão Pôster.
